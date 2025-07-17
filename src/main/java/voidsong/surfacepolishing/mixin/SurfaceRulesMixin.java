@@ -1,34 +1,44 @@
 package voidsong.surfacepolishing.mixin;
 
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.KeyDispatchDataCodec;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.SurfaceRules;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.placement.CaveSurface;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import voidsong.surfacepolishing.common.PerformantBiomeConditionSource;
+import org.spongepowered.asm.mixin.Shadow;
 
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 @SuppressWarnings("unused")
 @Mixin(SurfaceRules.class)
 public abstract class SurfaceRulesMixin {
 
-    @Mixin(SurfaceRules.ConditionSource.class)
-    public interface ConditionSource extends Function<SurfaceRules.Context, SurfaceRules.Condition> {
+    @Mixin(SurfaceRules.BiomeConditionSource.class)
+    public static final class BiomeConditionSource{
+        @Final
+        @Shadow
+        Predicate<ResourceKey<Biome>> biomeNameTest;
         /**
          * @author VoidsongDragonfly
-         * @reason Replacing Vanilla's use of {@link SurfaceRules.LazyYCondition LazyYCondition} that causes performance detriments due to unused caching behavior, and the use of a {@link net.minecraft.core.HolderSet HolderSet<Biome>} for storage & comparison
+         * @reason Replacing Vanilla's use of {@link SurfaceRules.LazyYCondition LazyYCondition} that causes performance detriments due to unused caching behavior
          */
-        @ModifyArg(method = "bootstrap", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/SurfaceRules;register(Lnet/minecraft/core/Registry;Ljava/lang/String;Lnet/minecraft/util/KeyDispatchDataCodec;)Lcom/mojang/serialization/MapCodec;"), index = 2)
-        private static KeyDispatchDataCodec<? extends SurfaceRules.ConditionSource> replaceBiomeRule(KeyDispatchDataCodec<? extends SurfaceRules.ConditionSource> codec) {
-            return codec.equals(SurfaceRules.BiomeConditionSource.CODEC) ? PerformantBiomeConditionSource.CODEC : codec;
+        @Overwrite
+        public SurfaceRules.Condition apply(final SurfaceRules.Context pContext) {
+            class BiomeCondition implements SurfaceRules.Condition {
+                @Override
+                public boolean test() {
+                    return pContext.biome.get().is(biomeNameTest);
+                }
+            }
+
+            return new BiomeCondition();
         }
     }
 

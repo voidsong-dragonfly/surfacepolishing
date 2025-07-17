@@ -4,7 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "SurfaceRulesMixin",
-    "SurfaceRulesMixin$ConditionSource",
+    "SurfaceRulesMixin$BiomeConditionSource",
     "SurfaceRulesMixin$StoneDepthCheck",
     "SurfaceRulesMixin$VerticalGradientConditionSource",
     "SurfaceRulesMixin$WaterConditionSource",
