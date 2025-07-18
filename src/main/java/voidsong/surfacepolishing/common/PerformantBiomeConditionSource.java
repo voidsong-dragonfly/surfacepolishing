@@ -30,7 +30,7 @@ public class PerformantBiomeConditionSource implements SurfaceRules.ConditionSou
 
             @Override
             public boolean test() {
-                return biomeSet.contains(pContext.biome.get());
+                return (pContext.getMinSurfaceLevel()-8) > pContext.blockY ? biomeSet.contains(pContext.biome.get()) : biomeSet.contains(((IContextExtension)(Object)pContext).surfacepolishing$getXZCachedBiome().get());
             }
         }
 

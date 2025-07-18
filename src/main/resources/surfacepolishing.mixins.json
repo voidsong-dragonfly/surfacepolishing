@@ -5,6 +5,7 @@
   "mixins": [
     "SurfaceRulesMixin",
     "SurfaceRulesMixin$ConditionSource",
+    "SurfaceRulesMixin$Context",
     "SurfaceRulesMixin$StoneDepthCheck",
     "SurfaceRulesMixin$VerticalGradientConditionSource",
     "SurfaceRulesMixin$WaterConditionSource",

@@ -1,20 +1,30 @@
 package voidsong.surfacepolishing.mixin;
 
+
+import com.google.common.base.Suppliers;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.KeyDispatchDataCodec;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.SurfaceRules;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.placement.CaveSurface;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import voidsong.surfacepolishing.common.IContextExtension;
 import voidsong.surfacepolishing.common.PerformantBiomeConditionSource;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unused")
 @Mixin(SurfaceRules.class)
@@ -29,6 +39,27 @@ public abstract class SurfaceRulesMixin {
         @ModifyArg(method = "bootstrap", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/SurfaceRules;register(Lnet/minecraft/core/Registry;Ljava/lang/String;Lnet/minecraft/util/KeyDispatchDataCodec;)Lcom/mojang/serialization/MapCodec;"), index = 2)
         private static KeyDispatchDataCodec<? extends SurfaceRules.ConditionSource> replaceBiomeRule(KeyDispatchDataCodec<? extends SurfaceRules.ConditionSource> codec) {
             return codec.equals(SurfaceRules.BiomeConditionSource.CODEC) ? PerformantBiomeConditionSource.CODEC : codec;
+        }
+    }
+
+    @Mixin(SurfaceRules.Context.class)
+    protected static final class Context implements IContextExtension {
+        @Unique
+        @SuppressWarnings("all")
+        Supplier<Holder<Biome>> cachedXZBiome;
+        @Unique
+        @SuppressWarnings("all")
+        final BlockPos.MutableBlockPos xzPos = new BlockPos.MutableBlockPos();
+
+        @Inject(method="updateXZ", at=@At("RETURN"))
+        private void updateXZ(int blockX, int blockZ, CallbackInfo ci) {
+            SurfaceRules.Context self = (SurfaceRules.Context) (Object) this;
+            this.cachedXZBiome = Suppliers.memoize(() -> self.biomeGetter.apply(xzPos.set(blockX, 1000000, blockZ)));
+        }
+
+        @Override
+        public Supplier<Holder<Biome>> surfacepolishing$getXZCachedBiome() {
+            return cachedXZBiome;
         }
     }
 
