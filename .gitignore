@@ -16,6 +16,7 @@ out
 # gradle
 build
 .gradle
+libs
 
 # other
 eclipse
@@ -24,3 +25,5 @@ runs
 run-data
 
 repo
+
+temp
