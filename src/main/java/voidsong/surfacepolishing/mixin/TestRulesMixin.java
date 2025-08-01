@@ -2,6 +2,7 @@ package voidsong.surfacepolishing.mixin;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.Registry;
 import net.minecraft.util.KeyDispatchDataCodec;
 import net.minecraft.world.level.levelgen.SurfaceRules;
@@ -30,7 +31,8 @@ public abstract class TestRulesMixin {
         @Inject(method = "bootstrap", at = @At("HEAD"))
         private static void onBootstrap(Registry<MapCodec<? extends SurfaceRules.ConditionSource>> registry,
                                         CallbackInfoReturnable<Codec<SurfaceRules.ConditionSource>> cir) {
-            System.out.println("aaaaaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaaaaaaaaaaa\naaaaaaaaaaaaaaa");
+            System.out.println("aaaaaaaaaaaaaaaaaaaaaaaa");
+            Minecraft.getInstance().level.getGameTime(); // this should give me a NPE
             SurfaceRules.register(registry, "biome", PerformantSurfaceRules.PerformantBiomeConditionSource.CODEC);
             SurfaceRules.register(registry, "vertical_gradient", PerformantSurfaceRules.PerformantVerticalGradientConditionSource.CODEC);
             SurfaceRules.register(registry, "y_above", PerformantSurfaceRules.PerformantYConditionSource.CODEC);

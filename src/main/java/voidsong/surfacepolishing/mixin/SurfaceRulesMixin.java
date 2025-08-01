@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 
 public class SurfaceRulesMixin {
+    /*
     @Mixin(value = SurfaceRules.StoneDepthCheck.class, priority = 100)
     public record StoneDepthCheck(int offset, boolean addSurfaceDepth, int secondaryDepthRange, CaveSurface surfaceType) {
         @Inject(method= "apply(Lnet/minecraft/world/level/levelgen/SurfaceRules$Context;)Lnet/minecraft/world/level/levelgen/SurfaceRules$Condition;", at = @At("HEAD"), cancellable = true)
@@ -92,5 +93,5 @@ public class SurfaceRulesMixin {
                 >= anchor.resolveY(pContext.context)
                 + pContext.surfaceDepth * surfaceDepthMultiplier;
         }
-    }
+    }*/
 }
