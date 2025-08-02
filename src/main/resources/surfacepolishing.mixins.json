@@ -3,8 +3,11 @@
   "package": "voidsong.surfacepolishing.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "TestRulesMixin",
-    "TestRulesMixin$ConditionSourceMixin"
+    "SurfaceRulesMixin$BiomeConditionSource",
+    "SurfaceRulesMixin$StoneDepthCheck",
+    "SurfaceRulesMixin$VerticalGradientConditionSource",
+    "SurfaceRulesMixin$YConditionSource",
+    "SurfaceRulesMixin$WaterConditionSource"
   ],
   "client": [],
   "injectors": {
