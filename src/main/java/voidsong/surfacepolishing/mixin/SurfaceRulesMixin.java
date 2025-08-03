@@ -5,14 +5,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.PositionalRandomFactory;
 import net.minecraft.world.level.levelgen.SurfaceRules;
 import net.minecraft.world.level.levelgen.VerticalAnchor;
 import net.minecraft.world.level.levelgen.placement.CaveSurface;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
+import voidsong.surfacepolishing.IContextExtension;
 
 import java.util.function.Predicate;
 
@@ -25,18 +25,36 @@ public abstract class SurfaceRulesMixin {
         Predicate<ResourceKey<Biome>> biomeNameTest;
         /**
          * @author VoidsongDragonfly
-         * @reason Replacing Vanilla's use of {@link SurfaceRules.LazyYCondition LazyYCondition} that causes performance detriments due to unused caching behavior
+         * @reason Replacing Vanilla's use of an per-block biome cache and converting it to a pseudo-2D biome cache.
+         * "Surface" biomes (above the min surface level) are cached in eight-block chunks by height to account for sky islands.
+         * Depths biomes (cave biomes) are evaluated per-block
          */
         @Overwrite
         public SurfaceRules.Condition apply(final SurfaceRules.Context pContext) {
-            class PerformantBiomeCondition implements SurfaceRules.Condition {
+            class PseudoLazyBiomeCondition extends SurfaceRules.LazyCondition {
+                protected PseudoLazyBiomeCondition(SurfaceRules.Context pContext) {
+                    super(pContext);
+                }
                 @Override
                 public boolean test() {
+                    // We check if we're in "surface" biome mode or depths biome mode; depths we return every block
+                    if (context.blockY < context.getMinSurfaceLevel()) return pContext.biome.get().is(biomeNameTest);
+                    // Otherwise we use normal lazy-cached behavior
+                    return super.test();
+                }
+
+                @Override
+                protected long getContextLastUpdate() {
+                    return ((IContextExtension)(Object)context).surfacepolishing$getLastBiomeUpdate();
+                }
+
+                @Override
+                protected boolean compute() {
                     return pContext.biome.get().is(biomeNameTest);
                 }
             }
 
-            return new PerformantBiomeCondition();
+            return new PseudoLazyBiomeCondition(pContext);
         }
     }
 
@@ -142,6 +160,39 @@ public abstract class SurfaceRulesMixin {
             }
 
             return new PerformantYCondition();
+        }
+    }
+
+    @Mixin(SurfaceRules.Context.class)
+    @SuppressWarnings("unused")
+    protected static final class Context implements IContextExtension {
+        @Shadow long lastUpdateXZ;
+        @Shadow @Final ChunkAccess chunk;
+        @Shadow public int blockX;
+        @Shadow public int blockZ;
+        @Unique
+        @SuppressWarnings("all")
+        int lastUpdatedHeightmap = Integer.MAX_VALUE;
+        @Unique
+        @SuppressWarnings("all")
+        long lastUpdatedBiome;
+
+
+        @Override
+        public long surfacepolishing$getLastBiomeUpdate() {
+            // If we've updated XZ we have changed column & need to update biome
+            if (lastUpdateXZ > lastUpdatedBiome) {
+                lastUpdatedBiome = lastUpdateXZ;
+                lastUpdatedHeightmap = Integer.MAX_VALUE;
+                return lastUpdateXZ;
+            // Otherwise, we only need to update biome every roughly eight blocks by heightmap; this should block out areas by surface/not surface
+            } else {
+                int currentHeightmap = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, blockX, blockZ);
+                // We use 12 here because preliminary surface uses eight, and we want to ensure we're quite below it before we check again
+                if (currentHeightmap < lastUpdatedHeightmap - 12)
+                    lastUpdatedBiome++;
+                return lastUpdatedBiome;
+            }
         }
     }
 }

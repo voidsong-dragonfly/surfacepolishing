@@ -4,10 +4,11 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "SurfaceRulesMixin$BiomeConditionSource",
+    "SurfaceRulesMixin$Context",
     "SurfaceRulesMixin$StoneDepthCheck",
     "SurfaceRulesMixin$VerticalGradientConditionSource",
-    "SurfaceRulesMixin$YConditionSource",
-    "SurfaceRulesMixin$WaterConditionSource"
+    "SurfaceRulesMixin$WaterConditionSource",
+    "SurfaceRulesMixin$YConditionSource"
   ],
   "client": [],
   "injectors": {
