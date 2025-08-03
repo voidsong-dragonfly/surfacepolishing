@@ -170,29 +170,34 @@ public abstract class SurfaceRulesMixin {
         @Shadow @Final ChunkAccess chunk;
         @Shadow public int blockX;
         @Shadow public int blockZ;
+        @Shadow public int blockY;
         @Unique
         @SuppressWarnings("all")
         int lastUpdatedHeightmap = Integer.MAX_VALUE;
         @Unique
         @SuppressWarnings("all")
-        long lastUpdatedBiome;
+        long lastUpdatedBiome = Long.MIN_VALUE;
+        @Unique
+        @SuppressWarnings("all")
+        long lastUpdatedBiomeXZ = Long.MIN_VALUE;
 
 
         @Override
         public long surfacepolishing$getLastBiomeUpdate() {
             // If we've updated XZ we have changed column & need to update biome
-            if (lastUpdateXZ > lastUpdatedBiome) {
-                lastUpdatedBiome = lastUpdateXZ;
-                lastUpdatedHeightmap = Integer.MAX_VALUE;
-                return lastUpdateXZ;
+            if (lastUpdateXZ > lastUpdatedBiomeXZ) {
+                lastUpdatedBiomeXZ = lastUpdateXZ;
+                lastUpdatedHeightmap = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, blockX, blockZ);
+                lastUpdatedBiome++;
             // Otherwise, we only need to update biome every roughly eight blocks by heightmap; this should block out areas by surface/not surface
             } else {
-                int currentHeightmap = chunk.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, blockX, blockZ);
                 // We use 12 here because preliminary surface uses eight, and we want to ensure we're quite below it before we check again
-                if (currentHeightmap < lastUpdatedHeightmap - 12)
+                if (blockY < lastUpdatedHeightmap - 12) {
+                    lastUpdatedHeightmap = blockY;
                     lastUpdatedBiome++;
-                return lastUpdatedBiome;
+                }
             }
+            return lastUpdatedBiome;
         }
     }
 }
